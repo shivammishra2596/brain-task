@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Evidence-based cognitive enrichment tasks for adults 30+. Discover neuroscience-backed activities to sharpen memory, attention, processing speed, and executive function.">
+  <title>Brain Function Project — Cognitive Enrichment for Adults 30+</title>
+  <link rel="stylesheet" href="styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+</head>
+<body>
+
+  <!-- Skip navigation -->
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+
+  <!-- Scroll progress -->
+  <div id="scroll-progress" role="progressbar" aria-label="Reading progress" aria-valuemin="0" aria-valuemax="100"></div>
+
+  <!-- ─── Navigation ─── -->
+  <nav class="site-nav" id="site-nav" aria-label="Main navigation">
+    <div class="container">
+      <div class="nav-inner">
+        <a href="#" class="nav-logo" aria-label="Brain Function Project home">
+          Brain<span class="dot">.</span>Function
+        </a>
+        <div class="nav-links" role="list">
+          <a href="#domains" role="listitem">Domains</a>
+          <a href="#tasks" role="listitem">Tasks</a>
+          <a href="#research" role="listitem">Research</a>
+          <a href="#faq" role="listitem">FAQ</a>
+        </div>
+      </div>
+    </div>
+  </nav>
+
+  <main id="main-content">
+
+    <!-- ─── HERO ─── -->
+    <header class="hero" id="hero" aria-label="Page hero">
+      <div class="hero-bg" id="hero-bg" aria-hidden="true"></div>
+      <div class="hero-grid-pattern" aria-hidden="true"></div>
+      <div class="container">
+        <div class="hero-content">
+          <div class="hero-eyebrow" aria-label="Status: Evidence-based">
+            <span class="pulse" aria-hidden="true"></span>
+            Evidence-Based · Adults 30+
+          </div>
+          <h1 class="t-display hero-headline">
+            Keep your brain<br>
+            <span class="accent-word">sharp for life.</span>
+          </h1>
+          <p class="t-body-lg hero-subline">
+            25 scientifically-grounded cognitive enrichment tasks — spanning working memory, processing speed, executive function, and more. Not therapy. Not clickbait. Real activities backed by peer-reviewed research.
+          </p>
+          <div class="hero-stats" aria-label="Project at a glance">
+            <div class="hero-stat">
+              <span class="num" id="stat-tasks" data-count-to="25" data-suffix="">0</span>
+              <span class="lbl">Curated Tasks</span>
+            </div>
+            <div class="hero-stat">
+              <span class="num" data-count-to="6" data-suffix="">0</span>
+              <span class="lbl">Cognitive Domains</span>
+            </div>
+            <div class="hero-stat">
+              <span class="num" data-count-to="4" data-suffix=" Levels">0</span>
+              <span class="lbl">Difficulty Tiers</span>
+            </div>
+            <div class="hero-stat">
+              <span class="num" data-count-to="100" data-suffix="%">0</span>
+              <span class="lbl">Free to Use</span>
+            </div>
+          </div>
+          <div class="hero-ctas">
+            <a href="#tasks" class="btn btn-primary" aria-label="Browse all tasks">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <path d="M9 18l6-6-6-6" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"/>
+              </svg>
+              Browse Tasks
+            </a>
+            <a href="#what-is" class="btn btn-secondary">
+              What is cognitive enrichment?
+            </a>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- ─── WHAT IS COGNITIVE ENRICHMENT ─── -->
+    <section id="what-is" aria-labelledby="what-is-heading">
+      <div class="container">
+        <p class="section-label">The Basics</p>
+        <h2 class="t-h1 fade-in-up" id="what-is-heading">
+          What is<br>cognitive enrichment?
+        </h2>
+        <div class="explainer-grid">
+          <div class="explainer-card fade-in-up" style="transition-delay:0.1s">
+            <div class="explainer-icon" style="background:#EFF6FF" aria-hidden="true">🧪</div>
+            <h3 class="t-h3">Science-grounded activities</h3>
+            <p class="t-body" style="color:var(--clr-ink-2);margin-top:8px">
+              Cognitive enrichment means deliberately practising activities that challenge your brain in ways your daily routine doesn't. Each task here is selected because peer-reviewed research supports its engagement of specific cognitive networks.
+            </p>
+          </div>
+          <div class="explainer-card fade-in-up" style="transition-delay:0.2s">
+            <div class="explainer-icon" style="background:#ECFDF5" aria-hidden="true">🚫</div>
+            <h3 class="t-h3">Not a medical intervention</h3>
+            <p class="t-body" style="color:var(--clr-ink-2);margin-top:8px">
+              This is not a treatment, diagnosis tool, or prevention program for any neurological condition. These tasks are enrichment — they engage your brain in challenging, evidence-backed ways. We make no disease-prevention claims. Ever.
+            </p>
+          </div>
+          <div class="explainer-card fade-in-up" style="transition-delay:0.3s">
+            <div class="explainer-icon" style="background:#FDF2F8" aria-hidden="true">📈</div>
+            <h3 class="t-h3">Real, transferable skills</h3>
+            <p class="t-body" style="color:var(--clr-ink-2);margin-top:8px">
+              The best cognitive enrichment tasks develop genuinely useful skills: navigating without GPS, speaking a new language, thinking strategically, reading attentively. The cognitive benefit comes with a real-world skill as a bonus.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── WHY 30+ ─── -->
+    <section aria-labelledby="why-heading">
+      <div class="container">
+        <div class="why-block fade-in-up">
+          <p class="section-label" style="color:rgba(147,197,253,0.8)">Why 30+</p>
+          <h2 class="t-h1" id="why-heading" style="color:#fff;margin-bottom:var(--sp-2)">
+            Your brain is already changing. <br>That's not a problem.
+          </h2>
+          <p style="color:rgba(255,255,255,0.65);max-width:600px;font-size:1.05rem;line-height:1.7">
+            From your late 20s onward, some cognitive processes begin to shift — not decline catastrophically, but change. Processing speed slows marginally. Working memory capacity becomes slightly more limited. These are normal, gradual changes. What neuroscience also shows is that the brain retains enormous plasticity throughout adulthood, and deliberate practice preserves and builds cognitive capacity at any age.
+          </p>
+          <div class="why-grid">
+            <div class="why-item fade-in-up">
+              <span class="tag">Processing Speed</span>
+              <h3 class="t-h3">Reaction times shift from ~30</h3>
+              <p>Timed practice tasks, rhythm drills, and rapid pattern recognition work directly engage this system — measurably improving performance.</p>
+            </div>
+            <div class="why-item fade-in-up" style="transition-delay:0.1s">
+              <span class="tag">Working Memory</span>
+              <h3 class="t-h3">Capacity becomes more precious</h3>
+              <p>Working memory — holding and manipulating information — is the engine of reasoning. Training it through dual n-back and mental arithmetic directly expands its effective capacity.</p>
+            </div>
+            <div class="why-item fade-in-up" style="transition-delay:0.2s">
+              <span class="tag">Neuroplasticity</span>
+              <h3 class="t-h3">Your brain still adapts constantly</h3>
+              <p>Learning a new skill — instrument, language, game — produces measurable structural changes even in adult brains. Novelty, challenge, and repetition remain the master formula.</p>
+            </div>
+            <div class="why-item fade-in-up" style="transition-delay:0.3s">
+              <span class="tag">Cognitive Reserve</span>
+              <h3 class="t-h3">What you build now compounds</h3>
+              <p>Cognitive reserve — the brain's resilience to change — is built through education, complex work, and enriching activities throughout life. You're building it every time you engage with a challenging task.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── COGNITIVE DOMAINS ─── -->
+    <section class="domains-section" id="domains" aria-labelledby="domains-heading">
+      <div class="container">
+        <p class="section-label">Filter by Domain</p>
+        <h2 class="t-h1 fade-in-up" id="domains-heading">6 cognitive domains.<br>All trainable.</h2>
+        <p class="t-body-lg fade-in-up" style="color:var(--clr-ink-2);margin-top:var(--sp-2);max-width:560px;transition-delay:0.1s">
+          Click a domain to filter the task library below. You can select multiple.
+        </p>
+        <div class="domains-grid" role="list" aria-label="Cognitive domains — click to filter tasks">
+          <button class="domain-card" data-domain="Working Memory"
+            style="--domain-clr:#3B82F6" role="listitem"
+            aria-pressed="false" aria-label="Filter by Working Memory">
+            <div class="domain-icon" aria-hidden="true">🧠</div>
+            <div class="domain-name">Working Memory</div>
+            <div class="domain-blurb">Hold and manipulate information in real time</div>
+            <div class="domain-count">Loading…</div>
+          </button>
+          <button class="domain-card" data-domain="Processing Speed"
+            style="--domain-clr:#8B5CF6" role="listitem"
+            aria-pressed="false" aria-label="Filter by Processing Speed">
+            <div class="domain-icon" aria-hidden="true">⚡</div>
+            <div class="domain-name">Processing Speed</div>
+            <div class="domain-blurb">Rapidly perceive, decide, and respond</div>
+            <div class="domain-count">Loading…</div>
+          </button>
+          <button class="domain-card" data-domain="Executive Function"
+            style="--domain-clr:#F59E0B" role="listitem"
+            aria-pressed="false" aria-label="Filter by Executive Function">
+            <div class="domain-icon" aria-hidden="true">♟️</div>
+            <div class="domain-name">Executive Function</div>
+            <div class="domain-blurb">Plan, inhibit impulses, and switch tasks</div>
+            <div class="domain-count">Loading…</div>
+          </button>
+          <button class="domain-card" data-domain="Visuospatial Reasoning"
+            style="--domain-clr:#10B981" role="listitem"
+            aria-pressed="false" aria-label="Filter by Visuospatial Reasoning">
+            <div class="domain-icon" aria-hidden="true">🌐</div>
+            <div class="domain-name">Visuospatial</div>
+            <div class="domain-blurb">Mentally rotate, navigate, and assemble</div>
+            <div class="domain-count">Loading…</div>
+          </button>
+          <button class="domain-card" data-domain="Sustained Attention"
+            style="--domain-clr:#EF4444" role="listitem"
+            aria-pressed="false" aria-label="Filter by Sustained Attention">
+            <div class="domain-icon" aria-hidden="true">🎯</div>
+            <div class="domain-name">Sustained Attention</div>
+            <div class="domain-blurb">Maintain focus over extended periods</div>
+            <div class="domain-count">Loading…</div>
+          </button>
+          <button class="domain-card" data-domain="Semantic Memory"
+            style="--domain-clr:#EC4899" role="listitem"
+            aria-pressed="false" aria-label="Filter by Semantic Memory">
+            <div class="domain-icon" aria-hidden="true">💬</div>
+            <div class="domain-name">Semantic Memory</div>
+            <div class="domain-blurb">Store and retrieve knowledge and language</div>
+            <div class="domain-count">Loading…</div>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── FILTER BAR ─── -->
+    <div class="filter-bar" id="filter-bar" role="search" aria-label="Filter and search tasks">
+      <div class="container">
+        <div class="filter-inner">
+          <div class="filter-group">
+            <span class="filter-group-label" id="diff-label">Difficulty</span>
+            <div role="group" aria-labelledby="diff-label">
+              <button class="filter-pill diff-1" data-diff="1" aria-pressed="false">Beginner</button>
+              <button class="filter-pill diff-2" data-diff="2" aria-pressed="false">Intermediate</button>
+              <button class="filter-pill diff-3" data-diff="3" aria-pressed="false">Advanced</button>
+              <button class="filter-pill diff-4" data-diff="4" aria-pressed="false">Expert</button>
+            </div>
+          </div>
+          <div class="filter-divider" aria-hidden="true"></div>
+          <div class="filter-group">
+            <span class="filter-group-label" id="time-label">Time</span>
+            <div role="group" aria-labelledby="time-label">
+              <button class="filter-pill" data-time-idx="0" aria-pressed="false">&lt; 15 min</button>
+              <button class="filter-pill" data-time-idx="1" aria-pressed="false">15–30 min</button>
+              <button class="filter-pill" data-time-idx="2" aria-pressed="false">30+ min</button>
+            </div>
+          </div>
+          <div class="filter-divider" aria-hidden="true"></div>
+          <div class="search-wrapper">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+              <circle cx="11" cy="11" r="8" stroke="currentColor" stroke-width="2"/>
+              <path d="m21 21-4.35-4.35" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+            </svg>
+            <input type="search" id="search-input" placeholder="Search tasks…"
+              aria-label="Search tasks by name or description"
+              autocomplete="off">
+          </div>
+          <span class="result-count" id="result-count" role="status" aria-live="polite" aria-atomic="true">
+            Showing <strong>0</strong> tasks
+          </span>
+          <button class="btn-reset" id="btn-reset" aria-label="Reset all filters">Reset</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── TASK GRID ─── -->
+    <section class="tasks-section" id="tasks" aria-labelledby="tasks-heading">
+      <div class="container">
+        <p class="section-label">The Tasks</p>
+        <h2 class="t-h2 fade-in-up" id="tasks-heading">25 curated enrichment tasks</h2>
+
+        <!-- Skeleton loading -->
+        <div class="skeleton-grid" id="skeleton-grid" aria-hidden="true">
+          <div class="skeleton-card"><div class="skeleton-line w-60 tall"></div><div class="skeleton-line w-40"></div><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div></div>
+          <div class="skeleton-card"><div class="skeleton-line w-60 tall"></div><div class="skeleton-line w-40"></div><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div></div>
+          <div class="skeleton-card"><div class="skeleton-line w-60 tall"></div><div class="skeleton-line w-40"></div><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div></div>
+          <div class="skeleton-card"><div class="skeleton-line w-60 tall"></div><div class="skeleton-line w-40"></div><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div></div>
+          <div class="skeleton-card"><div class="skeleton-line w-60 tall"></div><div class="skeleton-line w-40"></div><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div></div>
+          <div class="skeleton-card"><div class="skeleton-line w-60 tall"></div><div class="skeleton-line w-40"></div><div class="skeleton-line w-80"></div><div class="skeleton-line w-60"></div></div>
+        </div>
+
+        <!-- Task grid -->
+        <div class="tasks-grid" id="task-grid" role="feed" aria-label="Task library" aria-busy="true"></div>
+
+        <!-- Empty state -->
+        <div class="empty-state" id="empty-state" role="alert" aria-live="polite">
+          <div class="empty-icon" aria-hidden="true">🔍</div>
+          <h3 class="t-h3">No tasks match your filters</h3>
+          <p class="t-body" style="color:var(--clr-ink-3)">Try removing some filters or broadening your search.</p>
+          <button class="btn btn-secondary" onclick="document.getElementById('btn-reset').click()">
+            Reset Filters
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── RESEARCH FOUNDATION ─── -->
+    <section class="research-section" id="research" aria-labelledby="research-heading">
+      <div class="container">
+        <p class="section-label">Research Foundation</p>
+        <h2 class="t-h1 fade-in-up" id="research-heading">Built on evidence.</h2>
+        <p class="t-body-lg fade-in-up" style="color:var(--clr-ink-2);margin-top:var(--sp-2);max-width:600px;transition-delay:0.1s">
+          Every task in this library is supported by at least one peer-reviewed study or systematic review. Here's how we approach the evidence.
+        </p>
+        <div class="research-grid">
+          <div class="research-card fade-in-up">
+            <h3>📑 Our evidence standard</h3>
+            <p>We prioritise RCTs (randomised controlled trials) and meta-analyses. When only observational evidence exists, we flag it. We never cite a single weak study as proof — if the evidence is thin, we say so.</p>
+          </div>
+          <div class="research-card fade-in-up" style="transition-delay:0.1s">
+            <h3>🎯 Transfer transparency</h3>
+            <p>Transfer — whether a cognitive task benefit actually carries over to daily life — is one of the most contested areas in cognitive science. We describe transfer potential conservatively and clearly, without overclaiming.</p>
+          </div>
+          <div class="research-card fade-in-up" style="transition-delay:0.2s">
+            <h3>🔬 Key sources</h3>
+            <p>Jaeggi et al. (2008, PNAS) · Maguire et al. (2000, PNAS) · Dresler et al. (2017, Neuron) · Hölzel et al. (2011, Psychiatry Research) · Cepeda et al. (2006, Psychological Bulletin) · Bialystok et al. (2012, Trends in Cognitive Sciences)</p>
+          </div>
+          <div class="research-card fade-in-up" style="transition-delay:0.3s">
+            <h3>⚠️ What we don't claim</h3>
+            <p>We make no claims about preventing dementia, Alzheimer's disease, or any neurological condition. Cognitive enrichment is not medicine. These activities enrich your cognitive life — that's a meaningful, honest claim on its own.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ─── FAQ ─── -->
+    <section id="faq" aria-labelledby="faq-heading">
+      <div class="container">
+        <p class="section-label">FAQ</p>
+        <h2 class="t-h1 fade-in-up" id="faq-heading">Honest answers.</h2>
+
+        <div class="faq-list" role="list">
+
+          <div class="faq-item" role="listitem">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-1">
+              Will these tasks actually make me smarter?
+              <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <div class="faq-answer" id="faq-1">
+              Defining "smarter" is genuinely difficult — intelligence is multidimensional and contested as a concept. What we can say honestly: these tasks will develop specific, measurable cognitive skills. You'll hold more information in mind simultaneously, react faster to stimuli, plan more carefully, or recall language more readily — depending on what you practise. Whether that constitutes "smarter" is a philosophical question. Whether it's valuable is clearer.
+            </div>
+          </div>
+
+          <div class="faq-item" role="listitem">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-2">
+              How much time do I need to commit to see results?
+              <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <div class="faq-answer" id="faq-2">
+              The honest answer is: it depends heavily on the task and what you're measuring. Spaced repetition effects can be measured in weeks. Language fluency takes months to years. Chess pattern recognition improves over hundreds of hours. The most consistent finding in cognitive training research is that specificity matters — you improve what you practise. Set realistic expectations: target one task consistently for 30 days before evaluating progress.
+            </div>
+          </div>
+
+          <div class="faq-item" role="listitem">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-3">
+              Do brain training games work?
+              <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <div class="faq-answer" id="faq-3">
+              The evidence on commercially packaged "brain training" apps is mixed and often disappointing. Improving at a brain training game mostly makes you better at that specific game. What does have stronger evidence is learning genuinely complex, novel skills — a musical instrument, a new language, a strategic game like chess or Go. These tasks are harder and slower, but the cognitive engagement is real and the skills have standalone value beyond the training effect.
+            </div>
+          </div>
+
+          <div class="faq-item" role="listitem">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-4">
+              Can these tasks prevent Alzheimer's or dementia?
+              <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <div class="faq-answer" id="faq-4">
+              No. We cannot and do not make that claim — and you should be deeply sceptical of any tool that does. The relationship between cognitive enrichment activities and dementia risk is an active area of research with genuinely uncertain outcomes. What the evidence more clearly supports is the concept of cognitive reserve — that a richer cognitive life is associated with later onset of symptoms in people who develop neurodegenerative conditions. That's a meaningful finding, but it is not a prevention claim.
+            </div>
+          </div>
+
+          <div class="faq-item" role="listitem">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-5">
+              I'm 50+ (or 60+, or 70+). Is this still for me?
+              <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <div class="faq-answer" id="faq-5">
+              Absolutely. Neuroplasticity — the brain's ability to adapt and change — is not lost with age. It slows, but it persists throughout life. Research on language learning, music, and spatial training has shown measurable effects in adults in their 60s, 70s, and beyond. The tasks here are calibrated from Beginner to Expert, so there are meaningful entry points at every ability and age level. Start with L1 tasks and progress at your own pace.
+            </div>
+          </div>
+
+          <div class="faq-item" role="listitem">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-6">
+              What about transfer? Will I actually get better at real-world tasks?
+              <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <div class="faq-answer" id="faq-6">
+              Transfer — where skills generalise beyond the trained context — is the hardest and most contested question in cognitive training research. We're honest about this. Narrow transfer (improving at similar tasks) is fairly consistent. Far transfer (improving at unrelated real-world tasks) is much less reliably demonstrated. This is why we prioritise tasks where the real-world skill is itself the value: you learn chess, you get better at chess. You learn a language, you speak that language. The cognitive enrichment is the bonus — the skill is guaranteed.
+            </div>
+          </div>
+
+          <div class="faq-item" role="listitem">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-7">
+              How should I choose which tasks to start with?
+              <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <div class="faq-answer" id="faq-7">
+              Start with intrinsic interest, not obligation. The strongest predictor of sustained cognitive enrichment is continued engagement — and you'll only continue if you're genuinely interested. Browse the domains, pick the area you find most compelling, and start at Beginner or Intermediate. Build one habit before adding a second. Consistency over 30 days is worth more than variety over 3 days.
+            </div>
+          </div>
+
+          <div class="faq-item" role="listitem">
+            <button class="faq-question" aria-expanded="false" aria-controls="faq-8">
+              Is there evidence for every single task listed?
+              <svg class="faq-chevron" width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+                <polyline points="6 9 12 15 18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+              </svg>
+            </button>
+            <div class="faq-answer" id="faq-8">
+              Yes — every task passes a 5-gate validation: evidence base, real-world applicability, accessibility, transfer transparency, and ethical framing. That said, the evidence quality varies. Some tasks (dual n-back, spaced repetition, language learning) are supported by multiple RCTs and meta-analyses. Others rely on strong observational evidence or research on related cognitive systems. We cite the most relevant source for each task so you can judge the evidence quality yourself.
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- ─── Footer ─── -->
+  <footer class="site-footer" role="contentinfo">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-logo">Brain<span style="color:#3B82F6">.</span>Function</div>
+        <p class="footer-note">
+          Cognitive enrichment resource for adults 30+. All tasks are framed as enrichment only — no medical claims, no disease-prevention claims. Evidence citations are provided for each task. Not a substitute for professional medical advice. WCAG 2.1 AA compliant.
+        </p>
+        <nav class="footer-links" aria-label="Footer navigation">
+          <a href="#what-is">What is this?</a>
+          <a href="#research">Research</a>
+          <a href="#faq">FAQ</a>
+          <a href="README.md">README</a>
+        </nav>
+      </div>
+    </div>
+  </footer>
+
+  <!-- ─── Animations ─── -->
+  <style>
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(24px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+  </style>
+
+  <script src="script.js" defer></script>
+</body>
+</html>

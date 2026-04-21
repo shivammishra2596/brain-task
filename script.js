@@ -1,0 +1,1092 @@
+/* ============================================================
+   BRAIN FUNCTION PROJECT — Main Script
+   Handles: Task rendering, filtering, search, animations, scroll
+   ============================================================ */
+
+'use strict';
+
+// ─── Constants ───────────────────────────────────────────────
+
+const DOMAIN_META = {
+  'Working Memory':       { icon: '🧠', color: '#3B82F6', bg: '#EFF6FF', abbr: 'WM' },
+  'Processing Speed':     { icon: '⚡', color: '#8B5CF6', bg: '#F5F3FF', abbr: 'PS' },
+  'Executive Function':   { icon: '♟️', color: '#F59E0B', bg: '#FFFBEB', abbr: 'EF' },
+  'Visuospatial Reasoning': { icon: '🌐', color: '#10B981', bg: '#ECFDF5', abbr: 'VR' },
+  'Sustained Attention':  { icon: '🎯', color: '#EF4444', bg: '#FEF2F2', abbr: 'SA' },
+  'Semantic Memory':      { icon: '💬', color: '#EC4899', bg: '#FDF2F8', abbr: 'SM' },
+};
+
+const DIFF_META = {
+  1: { label: 'Beginner',     cls: 'diff-1' },
+  2: { label: 'Intermediate', cls: 'diff-2' },
+  3: { label: 'Advanced',     cls: 'diff-3' },
+  4: { label: 'Expert',       cls: 'diff-4' },
+};
+
+const TIME_RANGES = [
+  { label: '< 15 min', min: 0,  max: 15  },
+  { label: '15–30 min',min: 15, max: 30  },
+  { label: '30+ min',  min: 30, max: 9999 },
+];
+
+// ─── State ───────────────────────────────────────────────────
+
+const state = {
+  tasks: [],
+  savedTasks: new Set(),
+  filters: {
+    domains: new Set(),
+    difficulty: new Set(),
+    time: null,
+    search: '',
+  },
+};
+
+// ─── DOM Refs ────────────────────────────────────────────────
+
+const $ = (sel, ctx = document) => ctx.querySelector(sel);
+const $$ = (sel, ctx = document) => [...ctx.querySelectorAll(sel)];
+
+let taskGrid, skeletonGrid, emptyState, resultCountEl, filterBar;
+
+// ─── Boot ─────────────────────────────────────────────────────
+
+document.addEventListener('DOMContentLoaded', () => {
+  taskGrid     = $('#task-grid');
+  skeletonGrid = $('#skeleton-grid');
+  emptyState   = $('#empty-state');
+  resultCountEl = $('#result-count');
+  filterBar    = $('#filter-bar');
+
+  initScrollProgress();
+  initNavScroll();
+  initParallax();
+  initIntersectionObserver();
+  initCounterAnimations();
+  initDomainCards();
+  initFilterUI();
+  initSearch();
+  initFAQ();
+  loadTasks();
+});
+
+// ─── Scroll Progress Bar ──────────────────────────────────────
+
+function initScrollProgress() {
+  const bar = $('#scroll-progress');
+  window.addEventListener('scroll', () => {
+    const scrollTop = window.scrollY;
+    const docHeight = document.body.scrollHeight - window.innerHeight;
+    bar.style.width = docHeight > 0 ? `${(scrollTop / docHeight) * 100}%` : '0%';
+  }, { passive: true });
+}
+
+// ─── Nav on Scroll ────────────────────────────────────────────
+
+function initNavScroll() {
+  const nav = $('#site-nav');
+  const onScroll = () => nav.classList.toggle('scrolled', window.scrollY > 40);
+  window.addEventListener('scroll', onScroll, { passive: true });
+}
+
+// ─── Parallax Hero ────────────────────────────────────────────
+
+function initParallax() {
+  const heroBg = $('#hero-bg');
+  if (!heroBg) return;
+  let ticking = false;
+  window.addEventListener('scroll', () => {
+    if (!ticking) {
+      requestAnimationFrame(() => {
+        heroBg.style.transform = `translateY(${window.scrollY * 0.3}px)`;
+        ticking = false;
+      });
+      ticking = true;
+    }
+  }, { passive: true });
+}
+
+// ─── Intersection Observer for .fade-in-up ────────────────────
+
+function initIntersectionObserver() {
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.12 });
+
+  $$('.fade-in-up').forEach(el => obs.observe(el));
+}
+
+function observeNewCard(card) {
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        entry.target.classList.add('visible');
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.08 });
+  obs.observe(card);
+}
+
+// ─── Counter Animations ───────────────────────────────────────
+
+function initCounterAnimations() {
+  const counters = $$('[data-count-to]');
+  const obs = new IntersectionObserver((entries) => {
+    entries.forEach(entry => {
+      if (entry.isIntersecting) {
+        animateCounter(entry.target);
+        obs.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.5 });
+  counters.forEach(el => obs.observe(el));
+}
+
+function animateCounter(el) {
+  const target = parseInt(el.dataset.countTo, 10);
+  const duration = 1200;
+  const start = performance.now();
+  const update = (now) => {
+    const progress = Math.min((now - start) / duration, 1);
+    const eased = 1 - Math.pow(1 - progress, 3);
+    el.textContent = Math.round(eased * target) + (el.dataset.suffix || '');
+    if (progress < 1) requestAnimationFrame(update);
+  };
+  requestAnimationFrame(update);
+}
+
+// ─── Domain Cards ─────────────────────────────────────────────
+
+function initDomainCards() {
+  $$('.domain-card').forEach(card => {
+    card.addEventListener('click', () => {
+      const domain = card.dataset.domain;
+      card.classList.toggle('active');
+      if (state.filters.domains.has(domain)) {
+        state.filters.domains.delete(domain);
+      } else {
+        state.filters.domains.add(domain);
+      }
+      renderTasks();
+    });
+  });
+}
+
+// ─── Filter UI ────────────────────────────────────────────────
+
+function initFilterUI() {
+  // Difficulty pills
+  $$('[data-diff]').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const d = parseInt(pill.dataset.diff, 10);
+      pill.classList.toggle('active');
+      if (state.filters.difficulty.has(d)) {
+        state.filters.difficulty.delete(d);
+      } else {
+        state.filters.difficulty.add(d);
+      }
+      renderTasks();
+    });
+  });
+
+  // Time pills
+  $$('[data-time-idx]').forEach(pill => {
+    pill.addEventListener('click', () => {
+      const idx = parseInt(pill.dataset.timeIdx, 10);
+      const isSame = state.filters.time === idx;
+      $$('[data-time-idx]').forEach(p => p.classList.remove('active'));
+      if (isSame) {
+        state.filters.time = null;
+      } else {
+        state.filters.time = idx;
+        pill.classList.add('active');
+      }
+      renderTasks();
+    });
+  });
+
+  // Reset
+  $('#btn-reset').addEventListener('click', resetFilters);
+
+  // Filter bar elevation
+  window.addEventListener('scroll', () => {
+    filterBar.classList.toggle('elevated', window.scrollY > 200);
+  }, { passive: true });
+}
+
+function resetFilters() {
+  state.filters.domains.clear();
+  state.filters.difficulty.clear();
+  state.filters.time = null;
+  state.filters.search = '';
+  $('#search-input').value = '';
+  $$('.filter-pill').forEach(p => p.classList.remove('active'));
+  $$('.domain-card').forEach(c => c.classList.remove('active'));
+  renderTasks();
+}
+
+// ─── Search ───────────────────────────────────────────────────
+
+function initSearch() {
+  let debounceTimer;
+  const input = $('#search-input');
+  input.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      state.filters.search = input.value.trim().toLowerCase();
+      renderTasks();
+    }, 300);
+  });
+}
+
+// ─── Load Tasks ───────────────────────────────────────────────
+
+function loadTasks() {
+  try {
+    state.tasks = [
+  {
+    "id": "dual-n-back",
+    "title": "Dual n-Back Training",
+    "hook": "Train your brain like a RAM upgrade — this working memory workout is one of the most studied cognitive tasks in neuroscience.",
+    "cognitive_functions": ["Working Memory", "Processing Speed"],
+    "difficulty": 2,
+    "time_minutes": 15,
+    "steps": [
+      "Open a free Dual n-Back app (Brain Workshop or similar).",
+      "Start at n=1: remember whether a square's position and the letter you heard match what appeared one step ago.",
+      "Each session is 20 trials. Aim for >80% accuracy before increasing n.",
+      "Train 5 days/week. Do not skip rest days — consolidation matters.",
+      "Log your n-level and accuracy after each session."
+    ],
+    "benefits": [
+      "Improves working memory capacity, linked to better fluid reasoning in multiple RCTs.",
+      "Reduces mind-wandering during complex tasks.",
+      "Builds sustained attention through structured challenge."
+    ],
+    "evidence_source": "Jaeggi et al. (2008), PNAS — working memory training transfers to fluid intelligence.",
+    "prerequisites": "None",
+    "related_tasks": ["memory-palace", "spaced-rep-journaling"],
+    "time_label": "15 min",
+    "difficulty_label": "Intermediate"
+  },
+  {
+    "id": "route-variation",
+    "title": "Route Variation Walking",
+    "hook": "Your brain's GPS is one of the most plastic systems you own — turn every commute into a navigation workout.",
+    "cognitive_functions": ["Visuospatial Reasoning", "Sustained Attention"],
+    "difficulty": 1,
+    "time_minutes": 30,
+    "steps": [
+      "Choose a familiar destination you visit at least 3x/week.",
+      "Each trip, take a deliberately different route — even one new street counts.",
+      "After arriving, spend 2 minutes mentally retracing your path without looking at a map.",
+      "Once a week, try navigating somewhere new using only landmarks and a rough mental map.",
+      "Gradually extend the unfamiliar portion of your journeys."
+    ],
+    "benefits": [
+      "Engages hippocampal place cells, supporting spatial memory and cognitive map formation.",
+      "Promotes environmental novelty, a known driver of neuroplasticity.",
+      "Pairs physical activity with cognitive challenge for compounded benefit."
+    ],
+    "evidence_source": "Maguire et al. (2000), PNAS — London taxi drivers show enlarged hippocampal grey matter from spatial navigation practice.",
+    "prerequisites": "None",
+    "related_tasks": ["origami-folding", "memory-palace"],
+    "time_label": "30 min",
+    "difficulty_label": "Beginner"
+  },
+  {
+    "id": "spaced-rep-journaling",
+    "title": "Spaced Repetition Journaling",
+    "hook": "Your brain forgets on a predictable curve — outsmart it with the most evidence-backed memory technique in educational psychology.",
+    "cognitive_functions": ["Semantic Memory", "Executive Function"],
+    "difficulty": 1,
+    "time_minutes": 10,
+    "steps": [
+      "Each evening, write 3 things you learned or experienced that day in 1–2 sentences each.",
+      "Next day, before writing new entries, review yesterday's 3 items from memory, then check.",
+      "At day 7, review all entries from the week. At day 30, review from the month.",
+      "Star items that you struggle to recall — give those extra review cycles.",
+      "Optionally use Anki or RemNote for automated spaced repetition scheduling."
+    ],
+    "benefits": [
+      "Exploits the spacing effect — reviewing information at increasing intervals dramatically improves long-term retention.",
+      "Encourages daily metacognitive reflection, improving executive function.",
+      "Builds semantic memory networks through repeated, contextual retrieval."
+    ],
+    "evidence_source": "Cepeda et al. (2006), Psychological Bulletin — meta-analysis confirming spacing effect across 254 studies.",
+    "prerequisites": "None",
+    "related_tasks": ["feynman-technique", "dual-n-back"],
+    "time_label": "10 min",
+    "difficulty_label": "Beginner"
+  },
+  {
+    "id": "chess-endgame",
+    "title": "Chess Endgame Study",
+    "hook": "The endgame is where chess separates strategists from tacticians — mastering it demands the kind of deep planning that exercises your prefrontal cortex.",
+    "cognitive_functions": ["Executive Function", "Working Memory"],
+    "difficulty": 3,
+    "time_minutes": 45,
+    "steps": [
+      "Install Lichess (free) and navigate to 'Learn > Practice'.",
+      "Focus on one endgame theme per week: rook endings, king and pawn, bishop vs knight.",
+      "Study 3–5 positions per session. For each: calculate all variations before moving.",
+      "After the session, reconstruct one position from memory on a physical board.",
+      "Play 1–2 slow games (10+ min each) applying what you studied."
+    ],
+    "benefits": [
+      "Demands sustained calculation ahead — a direct workout for working memory and planning.",
+      "Requires inhibiting impulsive moves, strengthening executive control.",
+      "Promotes pattern recognition across domains through structured schema building."
+    ],
+    "evidence_source": "Aciego et al. (2012), Applied Neuropsychology — chess training improves planning and attention in adults.",
+    "prerequisites": "Basic chess rules",
+    "related_tasks": ["structured-debate", "cryptic-crossword"],
+    "time_label": "45 min",
+    "difficulty_label": "Advanced"
+  },
+  {
+    "id": "feynman-technique",
+    "title": "Feynman Technique Teaching",
+    "hook": "The moment you try to explain something simply, you instantly discover exactly what you don't understand.",
+    "cognitive_functions": ["Semantic Memory", "Executive Function"],
+    "difficulty": 2,
+    "time_minutes": 20,
+    "steps": [
+      "Choose a concept you recently learned or vaguely know (e.g. how vaccines work, what compound interest is).",
+      "Write the concept's title at the top of a blank page.",
+      "Explain it in plain language as if teaching a 12-year-old — no jargon allowed.",
+      "Identify every gap: where did you stall, simplify wrongly, or use undefined terms?",
+      "Go back to source material for the gaps only. Rewrite those sections. Repeat until explanation flows cleanly."
+    ],
+    "benefits": [
+      "Forces retrieval practice — the most effective learning strategy confirmed by cognitive science.",
+      "Exposes illusions of knowing, improving metacognitive accuracy.",
+      "Builds semantic networks by linking new knowledge to simple, accessible language."
+    ],
+    "evidence_source": "Karpicke & Blunt (2011), Science — retrieval practice produces more learning than elaborative studying.",
+    "prerequisites": "None",
+    "related_tasks": ["spaced-rep-journaling", "structured-debate"],
+    "time_label": "20 min",
+    "difficulty_label": "Intermediate"
+  },
+  {
+    "id": "recipe-improvisation",
+    "title": "Novel Recipe Improvisation",
+    "hook": "Cooking with constraints is one of the most surprisingly rigorous executive function workouts hiding in your kitchen.",
+    "cognitive_functions": ["Executive Function", "Visuospatial Reasoning"],
+    "difficulty": 2,
+    "time_minutes": 60,
+    "steps": [
+      "Set a constraint before you start: one protein, one cuisine style, or use only what's in your fridge.",
+      "No recipe lookup allowed until after you've planned your dish on paper.",
+      "Sketch the dish's components and cooking sequence before you begin.",
+      "Cook while actively adjusting — taste, modify, correct. Note what worked and why.",
+      "Debrief: write 3 things you'd do differently and what ingredient surprised you."
+    ],
+    "benefits": [
+      "Demands planning under uncertainty — a direct executive function challenge.",
+      "Requires visuospatial reasoning (assembly, plating, proportion estimation).",
+      "Novel environments and sensory feedback support cortical engagement."
+    ],
+    "evidence_source": "Kühn et al. (2014), Molecular Psychiatry — novel activity learning increases grey matter density.",
+    "prerequisites": "Basic cooking comfort",
+    "related_tasks": ["origami-folding", "structured-debate"],
+    "time_label": "60 min",
+    "difficulty_label": "Intermediate"
+  },
+  {
+    "id": "structured-debate",
+    "title": "Structured Debate Practice",
+    "hook": "Arguing a position you don't personally hold is one of the most demanding cognitive flexibility exercises that exists.",
+    "cognitive_functions": ["Executive Function", "Semantic Memory"],
+    "difficulty": 3,
+    "time_minutes": 30,
+    "steps": [
+      "Choose a nuanced topic (not a culture-war flashpoint) — e.g. 'Should cities ban cars from downtown?'",
+      "Assign yourself the side you're less sympathetic to.",
+      "Spend 10 minutes gathering 5 strong arguments for your assigned position.",
+      "Debate a partner for 15 minutes with a timer. The goal is to argue well, not to win.",
+      "After: identify the 2 strongest opposing arguments. What would it take to change your mind?"
+    ],
+    "benefits": [
+      "Trains cognitive flexibility and perspective-taking — key executive function sub-skills.",
+      "Builds structured argumentation, linked to improvements in reasoning accuracy.",
+      "Combats confirmation bias through practiced steel-manning of opposing views."
+    ],
+    "evidence_source": "Halpern (2014), Thought and Knowledge — structured argumentation training improves critical reasoning.",
+    "prerequisites": "None",
+    "related_tasks": ["feynman-technique", "chess-endgame"],
+    "time_label": "30 min",
+    "difficulty_label": "Advanced"
+  },
+  {
+    "id": "rhythm-drumming",
+    "title": "Rhythm & Drumming Practice",
+    "hook": "Drumming is one of the only activities that simultaneously engages motor, auditory, and executive brain networks.",
+    "cognitive_functions": ["Processing Speed", "Sustained Attention"],
+    "difficulty": 2,
+    "time_minutes": 20,
+    "steps": [
+      "No drum kit needed: use two pencils on a table or a practice pad.",
+      "Start with a basic rock beat at 60 BPM using a free metronome app.",
+      "Practice for 10 minutes at the current BPM before increasing by 5.",
+      "Add a new rhythm variation each week: swing, syncopation, or polyrhythm.",
+      "Record 2 minutes of yourself once a week and listen critically."
+    ],
+    "benefits": [
+      "Motor timing practice engages the cerebellum and basal ganglia — regions critical to processing speed.",
+      "Synchronizing to an external beat improves auditory attention and sensorimotor integration.",
+      "Progressive difficulty creates measurable skill milestones that sustain motivation."
+    ],
+    "evidence_source": "Repp & Su (2013), Psychological Bulletin — sensorimotor synchronization improves timing precision and attentional control.",
+    "prerequisites": "None",
+    "related_tasks": ["mindful-single-tasking", "language-sprint"],
+    "time_label": "20 min",
+    "difficulty_label": "Intermediate"
+  },
+  {
+    "id": "language-sprint",
+    "title": "Language Learning Sprint",
+    "hook": "Learning a new language is the closest thing science has found to a comprehensive brain workout — it demands memory, attention, and processing speed simultaneously.",
+    "cognitive_functions": ["Semantic Memory", "Processing Speed"],
+    "difficulty": 2,
+    "time_minutes": 20,
+    "steps": [
+      "Pick one language. Download Duolingo or use Pimsleur (audio-only, great for commutes).",
+      "Commit to 20 minutes daily for 30 days before evaluating progress.",
+      "Supplement with one episode of a TV show in your target language (subtitles in that language, not your native one).",
+      "Find one conversation partner on Tandem or HelloTalk for 15-minute weekly calls.",
+      "At week 4, write a 10-sentence paragraph about your week in the new language."
+    ],
+    "benefits": [
+      "Bilingual practice strengthens semantic networks and lexical retrieval speed.",
+      "Sustained learning over weeks builds processing speed through increasing fluency demands.",
+      "Evidence suggests multilingualism may delay age-related semantic memory decline."
+    ],
+    "evidence_source": "Bialystok et al. (2012), Trends in Cognitive Sciences — bilingualism modulates executive attention and cognitive reserve.",
+    "prerequisites": "None",
+    "related_tasks": ["feynman-technique", "spaced-rep-journaling"],
+    "time_label": "20 min",
+    "difficulty_label": "Intermediate"
+  },
+  {
+    "id": "origami-folding",
+    "title": "Origami Complex Folding",
+    "hook": "Origami is a geometry workout in disguise — your hands are computing 3D spatial transformations in real time.",
+    "cognitive_functions": ["Visuospatial Reasoning"],
+    "difficulty": 2,
+    "time_minutes": 45,
+    "steps": [
+      "Start with a simple model (paper crane) to calibrate your spatial baseline.",
+      "Move to intermediate models (modular origami, tessellations) after the basics are solid.",
+      "Before folding, study the diagram for 2 minutes and visualize each step mentally.",
+      "Fold without looking at the diagram as much as possible.",
+      "Try to recreate a model from memory the following day."
+    ],
+    "benefits": [
+      "Engages mental rotation — a core visuospatial skill linked to mathematical and engineering reasoning.",
+      "Fine motor + spatial integration activates sensorimotor and parietal cortex simultaneously.",
+      "Progressive model complexity provides a natural, self-pacing difficulty ladder."
+    ],
+    "evidence_source": "Shepard & Metzler (1971); more recently: Shephard (2008) on mental rotation and spatial cognition.",
+    "prerequisites": "None",
+    "related_tasks": ["route-variation", "memory-palace"],
+    "time_label": "30–90 min",
+    "difficulty_label": "Intermediate"
+  },
+  {
+    "id": "mindful-single-tasking",
+    "title": "Mindful Single-Tasking Block",
+    "hook": "Multitasking is a myth — what you're actually doing is switching rapidly and poorly. This practice restores your attention architecture.",
+    "cognitive_functions": ["Sustained Attention"],
+    "difficulty": 1,
+    "time_minutes": 25,
+    "steps": [
+      "Choose one meaningful task (reading, writing, a craft project — not passive media).",
+      "Set a 25-minute timer (Pomodoro format). Place phone face-down in another room.",
+      "When your mind wanders, label it ('planning', 'worrying', 'remembering') and return to the task without judgment.",
+      "After the timer: take a 5-minute break with no screen. Reflect on the quality of your attention.",
+      "Gradually extend the session to 45 or 90 minutes as your focus improves."
+    ],
+    "benefits": [
+      "Sustained attention practice strengthens the default mode network's executive control override.",
+      "Deliberate attention redirection builds metacognitive awareness — knowing when and why you drift.",
+      "Regular practice has been shown to reduce mind-wandering frequency over 8 weeks."
+    ],
+    "evidence_source": "Mrazek et al. (2013), Psychological Science — mindfulness training improves working memory and reduces mind-wandering.",
+    "prerequisites": "None",
+    "related_tasks": ["rhythm-drumming", "spaced-rep-journaling"],
+    "time_label": "25 min",
+    "difficulty_label": "Beginner"
+  },
+  {
+    "id": "memory-palace",
+    "title": "Memory Palace Construction",
+    "hook": "The method used by ancient Greek orators to memorize hours of speeches is still the most powerful memory technique ever documented.",
+    "cognitive_functions": ["Working Memory", "Visuospatial Reasoning"],
+    "difficulty": 3,
+    "time_minutes": 30,
+    "steps": [
+      "Choose a familiar location as your 'palace' (your home, commute route, or childhood street).",
+      "Walk through the location mentally and identify 10 distinct 'stations' in order.",
+      "Choose 10 items to memorize (a shopping list, vocabulary words, or facts).",
+      "Encode each item at a station using a vivid, unusual, multi-sensory image.",
+      "Test retrieval: mentally walk the palace and recall each item in sequence."
+    ],
+    "benefits": [
+      "Dramatically outperforms rote repetition for ordered recall in multiple experimental comparisons.",
+      "Integrates visuospatial and episodic memory systems — a rare dual-domain activation.",
+      "Used by World Memory Championship competitors to memorize entire decks of cards in minutes."
+    ],
+    "evidence_source": "Dresler et al. (2017), Neuron — memory palace training produces brain connectivity changes and 10x recall improvement.",
+    "prerequisites": "None",
+    "related_tasks": ["dual-n-back", "route-variation"],
+    "time_label": "30 min",
+    "difficulty_label": "Advanced"
+  },
+  {
+    "id": "cryptic-crossword",
+    "title": "Cryptic Crossword Solving",
+    "hook": "Every cryptic crossword clue is a miniature logic puzzle — solving them requires simultaneous wordplay, lateral thinking, and pattern recognition.",
+    "cognitive_functions": ["Semantic Memory", "Executive Function"],
+    "difficulty": 3,
+    "time_minutes": 30,
+    "steps": [
+      "Start with the Guardian's cryptic crossword (free online) or The Times cryptic on Monday (easiest edition).",
+      "Learn the 8 clue types: anagram, hidden word, double definition, charade, reversal, homophone, containment, &lit.",
+      "Spend 10 minutes maximum per clue before checking the answer. Understand the wordplay, not just the answer.",
+      "Keep a log of clue types you miss — target those specifically next session.",
+      "Graduate to harder setters once you're solving >60% of clues unaided."
+    ],
+    "benefits": [
+      "Demands retrieval from semantic memory under novel, misdirecting cues.",
+      "Requires executive inhibition — suppressing the obvious literal reading to find the cryptic one.",
+      "Regular practice builds lexical flexibility, the ability to see words as combinable units."
+    ],
+    "evidence_source": "Friedland & Fine (2015), Journal of Neuropsychology — word puzzle engagement associated with sharper vocabulary and verbal fluency.",
+    "prerequisites": "Comfortable with standard crosswords",
+    "related_tasks": ["chess-endgame", "language-sprint"],
+    "time_label": "30 min",
+    "difficulty_label": "Advanced"
+  },
+  {
+    "id": "badminton-drills",
+    "title": "Strategic Badminton Drills",
+    "hook": "Badminton is the fastest racket sport in the world — reading and reacting to a 400 km/h shuttle is a processing speed workout unlike anything else.",
+    "cognitive_functions": ["Processing Speed", "Executive Function"],
+    "difficulty": 2,
+    "time_minutes": 45,
+    "steps": [
+      "Find a partner or wall for solo practice. Focus on controlled rallies, not power.",
+      "Practice the 'shadow footwork' drill: move to 6 court corners in a fixed sequence without a shuttle.",
+      "Add tactical constraints: 'rally cross-court only', 'no smashing', 'only net play'.",
+      "Play games to 11 with a specific tactical goal each game (e.g. always exploit the backhand).",
+      "Debrief after play: what patterns did you miss? What did your opponent exploit?"
+    ],
+    "benefits": [
+      "Reactive sport demands rapid perception-to-action processing, directly training processing speed.",
+      "Tactical play requires planning under time pressure — an executive function challenge.",
+      "Aerobic activity amplifies neuroplasticity via BDNF (brain-derived neurotrophic factor) release."
+    ],
+    "evidence_source": "Hillman et al. (2008), Nature Reviews Neuroscience — aerobic exercise improves attention, memory, and processing speed.",
+    "prerequisites": "Basic racket familiarity helpful",
+    "related_tasks": ["rhythm-drumming", "chess-endgame"],
+    "time_label": "45 min",
+    "difficulty_label": "Intermediate"
+  },
+  {
+    "id": "collaborative-storytelling",
+    "title": "Collaborative Storytelling",
+    "hook": "Building a story with someone else forces you to listen, adapt, and improvise — three cognitive skills that degrade quietly without practice.",
+    "cognitive_functions": ["Executive Function", "Semantic Memory"],
+    "difficulty": 1,
+    "time_minutes": 20,
+    "steps": [
+      "Sit with a partner (or use an async writing app like Storium for solo play).",
+      "Establish a one-sentence premise and one rule: 'yes, and' only — never 'no' or 'but'.",
+      "Take turns adding 2–4 sentences to the story. Each turn must advance the plot.",
+      "Add a 'constraint round': one player chooses a word that must appear in the other's next turn.",
+      "Debrief: what surprised you? What direction did you expect the story to take?"
+    ],
+    "benefits": [
+      "Forces narrative coherence under improvisation — a demanding executive function task.",
+      "Activates semantic memory networks as you retrieve vocabulary, idioms, and story structures.",
+      "Social engagement during cognitive tasks amplifies attentional engagement."
+    ],
+    "evidence_source": "Mar (2011), Annual Review of Psychology — narrative comprehension and production engage overlapping social cognition networks.",
+    "prerequisites": "None",
+    "related_tasks": ["feynman-technique", "structured-debate"],
+    "time_label": "20 min",
+    "difficulty_label": "Beginner"
+  },
+  {
+    "id": "mental-arithmetic",
+    "title": "Mental Arithmetic Sprints",
+    "hook": "Mental arithmetic forces you to hold intermediate results in mind while computing forward — it's working memory training with a scoreboard.",
+    "cognitive_functions": ["Working Memory", "Processing Speed"],
+    "difficulty": 1,
+    "time_minutes": 10,
+    "steps": [
+      "Start with 2-digit addition and subtraction. No pen, no calculator.",
+      "Use an app like Mental Math Master or simply set yourself problems on paper, flip the page, then solve.",
+      "Work in timed rounds: 20 problems in 5 minutes. Track accuracy, not just speed.",
+      "Progress to multiplication of 2-digit numbers, then percentage estimation.",
+      "Apply it daily: estimate prices, tips, cooking ratios in real situations."
+    ],
+    "benefits": [
+      "Holding intermediate results while computing ahead is a direct working memory workout.",
+      "Timed practice builds number processing speed with measurable feedback.",
+      "Real-world application reinforces transfer from drill to daily function."
+    ],
+    "evidence_source": "Dehaene (2011), The Number Sense — numerical processing engages parietal-frontal networks linked to general cognitive ability.",
+    "prerequisites": "None",
+    "related_tasks": ["dual-n-back", "cryptic-crossword"],
+    "time_label": "10 min",
+    "difficulty_label": "Beginner"
+  },
+  {
+    "id": "sketching-from-observation",
+    "title": "Observational Sketching",
+    "hook": "Drawing from life forces your brain to see rather than assume — most people look at the world through a filter of labels, not visual reality.",
+    "cognitive_functions": ["Visuospatial Reasoning", "Sustained Attention"],
+    "difficulty": 1,
+    "time_minutes": 20,
+    "steps": [
+      "Sit in front of any object: a cup, a plant, a street view from your window.",
+      "Spend 2 minutes just looking before you draw anything. Note light, shadow, proportion.",
+      "Draw contour lines only (no shading first). Spend 80% of time looking, 20% drawing.",
+      "Compare your drawing to the subject. Mark 3 specific errors in proportion or angle.",
+      "Redraw just those 3 areas correctly. This targeted correction is the real learning event."
+    ],
+    "benefits": [
+      "Trains precise visual attention — the ability to see what's actually there vs. what the brain expects.",
+      "Builds hand-eye coordination and fine motor precision through sustained practice.",
+      "Meditative attention required for drawing is a side-channel mindfulness practice."
+    ],
+    "evidence_source": "Edwards (2012), Drawing on the Right Side of the Brain — observational drawing activates right-hemisphere visual processing modes.",
+    "prerequisites": "None",
+    "related_tasks": ["origami-folding", "mindful-single-tasking"],
+    "time_label": "20 min",
+    "difficulty_label": "Beginner"
+  },
+  {
+    "id": "go-game-study",
+    "title": "Go Game Study",
+    "hook": "Go has more possible game positions than atoms in the observable universe — its strategic depth makes chess look like tic-tac-toe.",
+    "cognitive_functions": ["Executive Function", "Visuospatial Reasoning"],
+    "difficulty": 4,
+    "time_minutes": 60,
+    "steps": [
+      "Start at OGS (online-go.com) — free, with interactive tutorials from beginner level.",
+      "Learn the rules first (15 min). Then play 9×9 board games before advancing to 13×13 or 19×19.",
+      "Study one 'tesuji' (tactical pattern) per week using dedicated pattern books or apps.",
+      "Review all your games: identify the single mistake that cost you the most territory.",
+      "Play one teaching game per week with a stronger player who gives feedback."
+    ],
+    "benefits": [
+      "Requires multi-move lookahead across a vast board — exceptional executive planning demand.",
+      "Holistic board reading engages visuospatial attention in parallel across 361 positions.",
+      "Go study develops pattern libraries across months — a sustained cognitive investment."
+    ],
+    "evidence_source": "Kim et al. (2014), PLOS ONE — Go playing is associated with superior executive function performance in adults.",
+    "prerequisites": "None (but patience is essential)",
+    "related_tasks": ["chess-endgame", "structured-debate"],
+    "time_label": "60 min",
+    "difficulty_label": "Expert"
+  },
+  {
+    "id": "peripheral-vision-drills",
+    "title": "Peripheral Vision Tracking",
+    "hook": "Elite athletes see the field differently than amateurs — peripheral awareness is trainable, and it transfers to everyday attentional breadth.",
+    "cognitive_functions": ["Processing Speed", "Sustained Attention"],
+    "difficulty": 2,
+    "time_minutes": 15,
+    "steps": [
+      "Sit at a table with 5 objects arranged in a semicircle at arm's length.",
+      "Focus your gaze on the center object without moving your eyes.",
+      "Have a partner (or timer) prompt you to name peripheral objects in random order.",
+      "Progress: add more objects, move them farther apart, or use colored cards with colors to name.",
+      "Transfer practice: while walking, consciously track 3 moving things in your periphery simultaneously."
+    ],
+    "benefits": [
+      "Expands useful visual field — the attention zone processed without foveal fixation.",
+      "Trains divided attention, the ability to hold multiple objects in awareness.",
+      "Processing speed in peripheral tasks is a trainable, independently measurable cognitive skill."
+    ],
+    "evidence_source": "Ball et al. (2002), JAMA — visual attention training transfers to real-world driving safety in older adults.",
+    "prerequisites": "None",
+    "related_tasks": ["badminton-drills", "mindful-single-tasking"],
+    "time_label": "15 min",
+    "difficulty_label": "Intermediate"
+  },
+  {
+    "id": "speed-reading-structured",
+    "title": "Structured Speed Reading",
+    "hook": "Most people read at the speed they learned to as a child — deliberately re-training reading rate can double comprehension throughput.",
+    "cognitive_functions": ["Processing Speed", "Sustained Attention"],
+    "difficulty": 2,
+    "time_minutes": 20,
+    "steps": [
+      "Measure your baseline: time 1 page of a book and multiply to get words per minute (WPM).",
+      "Practice 'chunking': train yourself to fixate every 3–4 words rather than each word individually.",
+      "Use a pointer (finger or pen) to pace your eyes — prevent regression (re-reading).",
+      "After each page, summarize the key idea in one sentence without looking back.",
+      "Measure WPM weekly. Target: improve by 10–15% within 30 days while maintaining >70% comprehension."
+    ],
+    "benefits": [
+      "Pacing tools reduce subvocalization — the silent inner voice that caps most people's reading speed.",
+      "Comprehension checks train active reading, vastly more effective than passive re-reading.",
+      "Processing speed gains in reading transfer to other rapid visual processing tasks."
+    ],
+    "evidence_source": "Rayner et al. (2016), Psychological Science in the Public Interest — evidence-based review of reading speed training effects.",
+    "prerequisites": "None",
+    "related_tasks": ["mindful-single-tasking", "spaced-rep-journaling"],
+    "time_label": "20 min",
+    "difficulty_label": "Intermediate"
+  },
+  {
+    "id": "instrument-practice",
+    "title": "Musical Instrument Practice",
+    "hook": "Learning an instrument as an adult is one of the richest neurological investments you can make — it's the gym, the chess club, and the meditation hall combined.",
+    "cognitive_functions": ["Working Memory", "Processing Speed"],
+    "difficulty": 3,
+    "time_minutes": 30,
+    "steps": [
+      "Choose your instrument. Ukulele, keyboard, and recorder have the lowest entry friction.",
+      "Use structured curriculum (JustinGuitar for guitar, Playground Sessions for piano — both free at starter level).",
+      "Practice in focused 15-minute blocks, not marathon sessions. Deliberate practice beats duration.",
+      "Dedicate one block to technical drill (scales, chords), one to repertoire (learning a piece).",
+      "Record yourself monthly. Listening back is the fastest way to identify unnoticed errors."
+    ],
+    "benefits": [
+      "Music reading and motor execution combine to create one of the highest working memory demands of any hobby.",
+      "Processing musical rhythm trains temporal processing — a fundamental dimension of cognitive speed.",
+      "Long-term musicians show larger corpus callosum and enhanced interhemispheric communication."
+    ],
+    "evidence_source": "Hanna-Pladdy & MacKay (2011), Neuropsychology — musical activity is associated with preserved cognitive function in aging.",
+    "prerequisites": "None",
+    "related_tasks": ["rhythm-drumming", "dual-n-back"],
+    "time_label": "30 min",
+    "difficulty_label": "Advanced"
+  },
+  {
+    "id": "backward-planning",
+    "title": "Backward Planning Exercise",
+    "hook": "Planning forward from today is how most people fail to finish projects — planning backward from the deadline is how professional strategists do it.",
+    "cognitive_functions": ["Executive Function", "Working Memory"],
+    "difficulty": 1,
+    "time_minutes": 15,
+    "steps": [
+      "Choose a real goal with a real deadline (a project, trip, or event).",
+      "Write the final deliverable/outcome at the top of a page.",
+      "Work backward: what must be true the day before? The week before? The month before?",
+      "Identify the critical path: which step, if delayed, delays everything?",
+      "Schedule the critical path items first. Add the rest around them."
+    ],
+    "benefits": [
+      "Backward planning activates prospective memory and temporal reasoning — key executive sub-skills.",
+      "Identifying dependencies explicitly trains the inhibition of irrelevant action (doing things out of order).",
+      "Translates abstract goals into structured, time-bound steps — the core of executive function in daily life."
+    ],
+    "evidence_source": "Miller et al. (1960), Plans and the Structure of Behavior — foundational cognitive science on goal hierarchies and planning.",
+    "prerequisites": "None",
+    "related_tasks": ["chess-endgame", "feynman-technique"],
+    "time_label": "15 min",
+    "difficulty_label": "Beginner"
+  },
+  {
+    "id": "trivia-deep-dive",
+    "title": "Trivia Deep Dive",
+    "hook": "Trivia isn't just useless facts — structured retrieval of diverse knowledge builds the kind of rich semantic networks that support sharp verbal recall.",
+    "cognitive_functions": ["Semantic Memory"],
+    "difficulty": 1,
+    "time_minutes": 15,
+    "steps": [
+      "Use Sporcle, Britannica Quiz, or a pub quiz app — aim for topics outside your expertise.",
+      "Never look up answers during the quiz. The struggle to recall is the workout.",
+      "After the quiz, look up every question you got wrong and read one paragraph about it.",
+      "Next session, start by trying to recall last session's missed answers.",
+      "Once a month, join a live pub quiz or online trivia night for social and competitive pressure."
+    ],
+    "benefits": [
+      "Retrieval failure followed by correct answer (errorful learning) produces stronger memory traces than passive study.",
+      "Cross-domain trivia forces retrieval from diverse semantic networks, building associative flexibility.",
+      "Social trivia settings enhance engagement and provide normative comparison for self-assessment."
+    ],
+    "evidence_source": "Kornell et al. (2009), Journal of Experimental Psychology — errorful generation improves memory more than passive study.",
+    "prerequisites": "None",
+    "related_tasks": ["spaced-rep-journaling", "cryptic-crossword"],
+    "time_label": "15 min",
+    "difficulty_label": "Beginner"
+  },
+  {
+    "id": "meditation-breath-count",
+    "title": "Breath-Count Meditation",
+    "hook": "Counting breaths sounds trivial until you try it — most people can't reliably reach 10 without losing count, revealing exactly how scattered their attention really is.",
+    "cognitive_functions": ["Sustained Attention", "Working Memory"],
+    "difficulty": 1,
+    "time_minutes": 10,
+    "steps": [
+      "Sit comfortably. Set a timer for 10 minutes.",
+      "Breathe naturally. On each exhale, count silently: 1, 2, 3... up to 10, then restart.",
+      "When you lose count or your mind wanders (and it will), gently restart from 1.",
+      "Track how high you consistently reach without losing count. This is your attention baseline.",
+      "Practice daily. When you reliably reach 10 repeatedly, extend to 20 minutes."
+    ],
+    "benefits": [
+      "Trains metacognitive awareness — noticing when attention has drifted is a learnable skill.",
+      "Working memory is engaged by holding the count while monitoring breath and noticing mind-wandering.",
+      "Structural brain changes in attention networks have been observed after 8 weeks of daily practice."
+    ],
+    "evidence_source": "Hölzel et al. (2011), Psychiatry Research — 8-week mindfulness program increases grey matter density in regions involved in attention.",
+    "prerequisites": "None",
+    "related_tasks": ["mindful-single-tasking", "spaced-rep-journaling"],
+    "time_label": "10 min",
+    "difficulty_label": "Beginner"
+  },
+  {
+    "id": "map-drawing",
+    "title": "Cognitive Map Drawing",
+    "hook": "Your mental map of your city is far less accurate than you think — the process of correcting it is a fascinating and rigorous spatial memory workout.",
+    "cognitive_functions": ["Visuospatial Reasoning", "Working Memory"],
+    "difficulty": 2,
+    "time_minutes": 20,
+    "steps": [
+      "From memory only, draw a map of your neighbourhood, city center, or city as a whole.",
+      "Include streets, landmarks, relative distances, and orientation (north, south).",
+      "Compare your map to Google Maps. Mark every error: wrong scale, missing streets, displaced landmarks.",
+      "Study the corrections. One week later, redraw without looking at either map.",
+      "Expand: draw your route to work, to a friend's house, or a city you've visited."
+    ],
+    "benefits": [
+      "Activates hippocampal spatial memory and demands explicit encoding of spatial relationships.",
+      "The correction phase forces deliberate re-encoding — more effective than passive map-reading.",
+      "Builds working memory by holding a large spatial layout in mind while constructing details."
+    ],
+    "evidence_source": "Epstein & Kanwisher (1998), Nature — parahippocampal place area encodes large-scale spatial layouts; use it or lose it.",
+    "prerequisites": "None",
+    "related_tasks": ["route-variation", "origami-folding"],
+    "time_label": "20 min",
+    "difficulty_label": "Intermediate"
+  }
+];
+    skeletonGrid.style.display = 'none';
+    populateDomainCounts();
+    renderTasks();
+  } catch (err) {
+    skeletonGrid.style.display = 'none';
+    taskGrid.innerHTML = `<p style="color:var(--clr-ink-3);padding:2rem">Could not load tasks. Please ensure tasks.json is in the same folder as index.html.</p>`;
+    console.error(err);
+  }
+}
+
+function populateDomainCounts() {
+  Object.keys(DOMAIN_META).forEach(domain => {
+    const count = state.tasks.filter(t => t.cognitive_functions.includes(domain)).length;
+    const el = $(`[data-domain="${domain}"] .domain-count`);
+    if (el) el.textContent = `${count} task${count !== 1 ? 's' : ''}`;
+  });
+  // Update hero stat
+  const heroTotal = $('#stat-tasks');
+  if (heroTotal) heroTotal.dataset.countTo = state.tasks.length;
+}
+
+// ─── Filter Logic ─────────────────────────────────────────────
+
+function filterTasks() {
+  const { domains, difficulty, time, search } = state.filters;
+  return state.tasks.filter(task => {
+    // Domain filter (OR within domain)
+    if (domains.size > 0) {
+      const hasDomain = task.cognitive_functions.some(fn => domains.has(fn));
+      if (!hasDomain) return false;
+    }
+    // Difficulty filter
+    if (difficulty.size > 0 && !difficulty.has(task.difficulty)) return false;
+    // Time filter
+    if (time !== null) {
+      const r = TIME_RANGES[time];
+      if (task.time_minutes <= r.min || task.time_minutes > r.max) return false;
+    }
+    // Search
+    if (search) {
+      const haystack = [task.title, task.hook, ...task.benefits].join(' ').toLowerCase();
+      if (!haystack.includes(search)) return false;
+    }
+    return true;
+  });
+}
+
+// ─── Render Tasks ─────────────────────────────────────────────
+
+function renderTasks() {
+  const filtered = filterTasks();
+
+  // Update result count (aria-live)
+  resultCountEl.innerHTML = `Showing <strong>${filtered.length}</strong> of <strong>${state.tasks.length}</strong> tasks`;
+
+  taskGrid.innerHTML = '';
+  emptyState.classList.toggle('visible', filtered.length === 0);
+
+  filtered.forEach((task, i) => {
+    const card = buildCard(task);
+    card.style.transitionDelay = `${Math.min(i * 40, 400)}ms`;
+    card.classList.add('fade-in-up');
+    taskGrid.appendChild(card);
+    // Observe new card
+    requestAnimationFrame(() => observeNewCard(card));
+  });
+}
+
+// ─── Build Card ───────────────────────────────────────────────
+
+function buildCard(task) {
+  const diff = DIFF_META[task.difficulty];
+  const primaryDomain = task.cognitive_functions[0];
+  const domainMeta = DOMAIN_META[primaryDomain] || { color: '#1A56DB', bg: '#EFF6FF', icon: '🧠' };
+
+  const article = document.createElement('article');
+  article.className = 'task-card';
+  article.setAttribute('role', 'article');
+  article.setAttribute('aria-label', task.title);
+  article.style.setProperty('--card-accent', domainMeta.color);
+
+  // Domain badges
+  const badgesHTML = task.cognitive_functions.map(fn => {
+    const dm = DOMAIN_META[fn] || {};
+    return `<span class="domain-badge" style="--badge-bg:${dm.bg};--badge-clr:${dm.color}">${dm.icon || ''} ${fn}</span>`;
+  }).join('');
+
+  // Steps HTML
+  const stepsHTML = task.steps.map((step, i) => `
+    <li class="step-item">
+      <span class="step-num" aria-label="Step ${i + 1}">${i + 1}</span>
+      <span class="step-text">${step}</span>
+    </li>
+  `).join('');
+
+  // Benefits HTML
+  const benefitsHTML = task.benefits.map(b => `
+    <li class="benefit-item">
+      <svg class="benefit-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span class="benefit-text">${b}</span>
+    </li>
+  `).join('');
+
+  const isSaved = state.savedTasks.has(task.id);
+
+  article.innerHTML = `
+    <div class="card-header">
+      <div class="card-tags">${badgesHTML}</div>
+      <span class="diff-badge ${diff.cls}" aria-label="Difficulty: ${diff.label}">${diff.label}</span>
+    </div>
+    <div class="card-meta">
+      <span class="meta-chip" aria-label="Time: ${task.time_label}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2"/>
+          <polyline points="12 6 12 12 16 14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        ${task.time_label}
+      </span>
+      ${task.prerequisites && task.prerequisites !== 'None' ? `
+      <span class="meta-chip" aria-label="Prerequisites: ${task.prerequisites}">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        ${task.prerequisites}
+      </span>` : ''}
+    </div>
+    <h3 class="card-title">${task.title}</h3>
+    <p class="card-hook">${task.hook}</p>
+    <p class="card-evidence t-mono">${task.evidence_source}</p>
+    <button class="card-expand-btn" aria-expanded="false" aria-controls="expanded-${task.id}">
+      Steps & Benefits
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+        <polyline points="6 9 12 15 18 9" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+    <div class="card-expanded-content" id="expanded-${task.id}" role="region" aria-label="Details for ${task.title}">
+      <p class="expanded-label">How to do it</p>
+      <ol class="steps-list" aria-label="Steps">${stepsHTML}</ol>
+      <p class="expanded-label">Why it works</p>
+      <ul class="benefits-list" aria-label="Benefits">${benefitsHTML}</ul>
+      <div class="card-actions">
+        <button class="btn-start" onclick="handleStart('${task.id}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" aria-hidden="true">
+            <polygon points="5 3 19 12 5 21 5 3" fill="currentColor"/>
+          </svg>
+          Start This Task
+        </button>
+        <button class="btn-save ${isSaved ? 'saved' : ''}" onclick="handleSave('${task.id}', this)" aria-label="${isSaved ? 'Saved' : 'Save for later'}">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="${isSaved ? 'currentColor' : 'none'}" aria-hidden="true">
+            <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+          </svg>
+          ${isSaved ? 'Saved' : 'Save'}
+        </button>
+      </div>
+    </div>
+  `;
+
+  // Expand toggle
+  const btn = article.querySelector('.card-expand-btn');
+  btn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const expanded = article.classList.toggle('expanded');
+    btn.setAttribute('aria-expanded', expanded);
+  });
+
+  // Click card to expand
+  article.addEventListener('click', () => {
+    const expanded = article.classList.toggle('expanded');
+    const b = article.querySelector('.card-expand-btn');
+    b.setAttribute('aria-expanded', expanded);
+  });
+
+  return article;
+}
+
+// ─── Task Actions ─────────────────────────────────────────────
+
+window.handleStart = function(taskId) {
+  const task = state.tasks.find(t => t.id === taskId);
+  if (task) {
+    alert(`Starting: ${task.title}\n\nStep 1: ${task.steps[0]}`);
+  }
+};
+
+window.handleSave = function(taskId, btn) {
+  const event = arguments[2]; // stop propagation
+  if (state.savedTasks.has(taskId)) {
+    state.savedTasks.delete(taskId);
+    btn.classList.remove('saved');
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Save`;
+    btn.setAttribute('aria-label', 'Save for later');
+  } else {
+    state.savedTasks.add(taskId);
+    btn.classList.add('saved');
+    btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg> Saved`;
+    btn.setAttribute('aria-label', 'Saved');
+  }
+};
+
+// ─── FAQ ──────────────────────────────────────────────────────
+
+function initFAQ() {
+  $$('.faq-question').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const item = btn.closest('.faq-item');
+      const wasOpen = item.classList.contains('open');
+      $$('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!wasOpen) item.classList.add('open');
+      btn.setAttribute('aria-expanded', !wasOpen);
+    });
+  });
+}
